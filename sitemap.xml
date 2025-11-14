@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Replace "https://example.com" with your actual site URL before publishing.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <url>
+    <loc>https://example.com/</loc>
+    <lastmod>2025-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <!-- Images from gallery (update domain if needed) -->
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172531_679.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172536_933.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172541_594.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172647_624.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172657_494.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172707_937.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172824_421.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172826_811.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172828_397.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172830_876.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172832_229.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_172833_366.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_173117_712.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_173117_766.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_173123_380.jpg</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://example.com/samfedel%20farms/IMG_20251114_173127_579.jpg</image:loc>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://example.com/index.html</loc>
+    <lastmod>2025-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://example.com/#about</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://example.com/#services</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://example.com/#inventory</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://example.com/#contact</loc>
+    <priority>0.4</priority>
+  </url>
+
+</urlset>

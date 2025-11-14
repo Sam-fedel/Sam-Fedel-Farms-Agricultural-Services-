@@ -1,0 +1,8 @@
+# Robots configuration for Sam Fedel Farms
+# Update the Sitemap line to your actual site domain before publishing.
+
+User-agent: *
+Allow: /
+
+# Point crawlers to the sitemap (replace example.com with your domain)
+Sitemap: https://example.com/sitemap.xml
