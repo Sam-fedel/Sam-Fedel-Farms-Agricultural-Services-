@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sam Fedel Farms</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Sam Fedel Farms & Agriculture Services </h1>
+            <p>Innovating Agriculture, Poultry & Fishery Solutions</p>
+            <a href="#services" class="btn">Explore Our Work</a>
+        </div>
+        <div class="hero-animation"></div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <h2>About Sam Fedel Farms</h2>
+        <p>Sam Fedel Farms is dedicated to providing sustainable farming solutions, innovative poultry care, and modern fishery services for the community. Our mission is to combine traditional expertise with modern technology to cultivate excellence in every project.</p>
+        <p><strong>Business Owner:</strong> Felicia Eke – a passionate entrepreneur committed to sustainable agriculture, quality poultry production, and healthy fishery practices. She ensures that every aspect of the farm reflects professionalism, innovation, and community care.</p>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <h2>Our Services</h2>
+        <div class="service-cards">
+            <div class="card">
+                <h3>Farming - Cropping</h3>
+                <p>We grow yams, peppers, and other crops with care and modern techniques for maximum yield.</p>
+            </div>
+            <div class="card">
+                <h3>Fishery</h3>
+                <p>Providing sustainable fish farming solutions with clean and healthy ponds.</p>
+            </div>
+            <div class="card">
+                <h3>Poultry</h3>
+                <p>Healthy poultry farming, proper feeding, and veterinary support for optimal production.</p>
+            </div>
+            <div class="card">
+                <h3>Snail Rearing</h3>
+                <p>Small-scale snail farming (heliciculture) for sustainable protein and niche markets.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Inventory / Stock Section -->
+    <section id="inventory" class="inventory">
+        <h2>Inventory & Stock</h2>
+        <p>Track what we currently have in stock. Toggle items when they arrive or sell out. Changes are saved locally in your browser.</p>
+
+        <div class="stock-wrap">
+            <ul class="stock-list" id="stockList" aria-live="polite"></ul>
+
+            <form id="stockForm" class="stock-form" aria-label="Add stock item">
+                <input id="stockName" type="text" placeholder="Add item (e.g. Broiler Chicks)" aria-label="Item name" required>
+                <button type="submit" class="btn">Add Item</button>
+            </form>
+        </div>
+        <p class="note">Tip: Use the toggle beside each item to mark it as In Stock or Out of Stock.</p>
+    </section>
+
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <h2>Contact Us</h2>
+        <p>Reach out via WhatsApp, Email, or visit us!</p>
+        <div class="contact-buttons">
+            <a href="https://wa.me/08037096233" class="btn contact-btn">WhatsApp: 08037096233</a>
+            <a href="mailto:feliciaeke74@gmail.com" class="btn contact-btn">Email: feliciaeke74@gmail.com</a>
+        </div>
+        <div class="map">
+    <iframe 
+        src="https://www.google.com/maps?q=Rivers%20State%2C%20Port%20Harcourt%2C%20Woji%2C%20Gift%20Lane&output=embed" 
+        width="100%" 
+        height="300" 
+        frameborder="0" 
+        style="border:0;" 
+        allowfullscreen="" 
+        loading="lazy" 
+        referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+</div>
+    </section>
+
+    <!-- Footer -->
+    <div class="grass-wrap" aria-hidden="true">
+        <div class="grass-layer layer1"></div>
+        <div class="grass-layer layer2"></div>
+        <div class="grass-layer layer3"></div>
+    </div>
+
+    <footer>
+        <p>Built by <strong>QuickRedTech</strong><br><br> | Business Owner: <strong>Felicia Eke</strong></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
