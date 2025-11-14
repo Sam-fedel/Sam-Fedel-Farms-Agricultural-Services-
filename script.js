@@ -474,3 +474,48 @@ function showToast(msg, timeout = 3000) {
         t._timeout = setTimeout(() => { t.style.opacity = '0'; }, timeout);
     } catch (e) { /* ignore */ }
 }
+
+/* Typewriter animation for hero paragraph */
+function runHeroTypewriter() {
+    const el = document.getElementById('hero-type');
+    if (!el) return;
+    const text = el.getAttribute('data-text') || el.textContent || '';
+    const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduce) {
+        el.textContent = text;
+        return;
+    }
+    el.textContent = '';
+    let i = 0;
+    const speed = 45; // ms per char
+    const timer = setInterval(() => {
+        el.textContent += text.charAt(i);
+        i++;
+        if (i >= text.length) {
+            clearInterval(timer);
+        }
+    }, speed);
+}
+
+/* Mobile nav toggle */
+function initMobileNav() {
+    const toggle = document.querySelector('.nav-toggle');
+    const links = document.querySelector('.nav-links');
+    if (!toggle || !links) return;
+    toggle.addEventListener('click', () => {
+        const opened = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
+    });
+    // Close when a nav link is chosen (good for single-page anchors)
+    links.addEventListener('click', (e) => {
+        if (e.target.tagName.toLowerCase() === 'a') {
+            links.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    runHeroTypewriter();
+    initMobileNav();
+});

@@ -578,3 +578,48 @@ footer strong {
 @media (prefers-reduced-motion: reduce) {
     .bouncing-balls .ball { animation: none !important; opacity: 0.7; transform: translateY(0) scale(1); }
 }
+
+/* Navigation bar and typewriter styles */
+.site-header {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(6px);
+    background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35));
+}
+.site-nav {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+}
+.brand { color: #fff; text-decoration: none; font-weight: 800; letter-spacing: 0.4px; }
+.nav-links { list-style: none; display: flex; gap: 12px; align-items: center; margin: 0; padding: 0; }
+.nav-links a { color: #fff; text-decoration: none; padding: 8px 10px; border-radius: 8px; font-weight: 600; }
+.nav-links a:hover, .nav-links a:focus { background: rgba(255,255,255,0.04); outline: none; }
+.nav-toggle { display: none; background: transparent; border: 1px solid rgba(255,255,255,0.06); color: #fff; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+
+/* make room for the fixed header so hero content doesn't sit under it */
+.hero { min-height: calc(100vh - 64px); padding-top: 40px; }
+
+@media (max-width: 720px) {
+    .nav-toggle { display: block; }
+    .nav-links { position: absolute; right: 12px; top: 56px; background: rgba(8,17,8,0.95); flex-direction: column; padding: 10px; border-radius: 10px; display: none; box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
+    .nav-links.open { display: flex; }
+    .nav-links a { padding: 10px 12px; }
+}
+
+/* Typewriter look */
+.typewriter { display: inline-block; white-space: nowrap; overflow: hidden; vertical-align: middle; color: #ffffcc; font-weight: 600; }
+.typewriter::after { content: ''; display: inline-block; width: 2px; height: 1.05em; background: #fff; margin-left: 6px; vertical-align: middle; animation: twink 1s steps(2,end) infinite; }
+@keyframes twink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .typewriter::after { display: none; }
+}
+
