@@ -62,11 +62,19 @@ const defaultInventory = [
   { name: 'Broiler Chicks', inStock: false },
   { name: 'Snail Rearing (stock)', inStock: false }
 ];
+  // Broadcast channel (notify open pages in same origin)
+  const bc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('sf_admin_channel') : null;
+
+  function broadcastInventory(items){
+    try{ if(bc) bc.postMessage({ type: 'inventoryUpdate', items }); }catch(e){console.warn('broadcast failed', e);} }
+
+  function broadcastGallery(meta){
+    try{ if(bc) bc.postMessage({ type: 'galleryUpdate', meta }); }catch(e){console.warn('broadcast failed', e);} }
 
 function loadInventory(){
   try{ const raw = localStorage.getItem(INVENTORY_KEY); if(!raw) return defaultInventory.slice(); const p = JSON.parse(raw); return Array.isArray(p)?p:defaultInventory.slice(); }catch(e){console.warn(e); return defaultInventory.slice(); }
 }
-function saveInventory(items){ try{ localStorage.setItem(INVENTORY_KEY, JSON.stringify(items)); }catch(e){ console.warn('save failed',e); } }
+  function saveInventory(items){ try{ localStorage.setItem(INVENTORY_KEY, JSON.stringify(items)); broadcastInventory(items); }catch(e){ console.warn('save failed',e); } }
 
 function renderInventory(){
   const list = document.getElementById('invList'); if(!list) return; list.innerHTML='';
@@ -135,7 +143,7 @@ const galleryFiles = [
 ];
 
 function loadGalleryMeta(){ try{ const raw = localStorage.getItem(GALLERY_META_KEY); return raw?JSON.parse(raw):{}; }catch(e){ return {}; } }
-function saveGalleryMeta(m){ try{ localStorage.setItem(GALLERY_META_KEY, JSON.stringify(m)); }catch(e){ console.warn(e); } }
+function saveGalleryMeta(m){ try{ localStorage.setItem(GALLERY_META_KEY, JSON.stringify(m)); broadcastGallery(m); }catch(e){ console.warn(e); } }
 
 function renderGallery(){
   const grid = document.getElementById('galleryGrid'); if(!grid) return; grid.innerHTML=''; const meta = loadGalleryMeta();

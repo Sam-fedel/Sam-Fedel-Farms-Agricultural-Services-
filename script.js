@@ -258,4 +258,40 @@ if (stockForm) {
 // Initialize inventory display on load
 document.addEventListener('DOMContentLoaded', () => {
     renderInventory();
+    // Apply gallery featured metadata when page loads
+    applyGalleryMeta();
 });
+
+// BroadcastChannel listener for admin updates (real-time sync)
+const adminChannel = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('sf_admin_channel') : null;
+if (adminChannel) {
+    adminChannel.addEventListener('message', (ev) => {
+        try {
+            const data = ev.data || {};
+            if (data.type === 'inventoryUpdate') {
+                // inventory changed in admin page — re-render from localStorage
+                renderInventory();
+            } else if (data.type === 'galleryUpdate') {
+                // gallery metadata changed
+                applyGalleryMeta();
+            }
+        } catch (err) {
+            console.warn('adminChannel message handling error', err);
+        }
+    });
+}
+
+// Gallery metadata helpers (mirror of admin)
+const GALLERY_META_KEY = 'sf_gallery_meta';
+function loadGalleryMeta(){ try { const raw = localStorage.getItem(GALLERY_META_KEY); return raw?JSON.parse(raw):{}; } catch(e) { return {}; } }
+function applyGalleryMeta(){
+    const meta = loadGalleryMeta();
+    const imgs = document.querySelectorAll('#gallery img');
+    if (!imgs) return;
+    imgs.forEach(img => {
+        // normalize stored keys and image srcs (admin stores unencoded path)
+        const imgSrc = decodeURI(img.getAttribute('src'));
+        if (meta[imgSrc] || meta[decodeURI(imgSrc)]) img.classList.add('featured');
+        else img.classList.remove('featured');
+    });
+}
