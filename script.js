@@ -158,12 +158,18 @@ if (window.matchMedia) {
 
 /* Inventory / local stock management */
 const INVENTORY_KEY = 'sf_inventory_v1';
+
+// Generate a stable-ish id for inventory items (timestamp + random)
+function generateId(prefix = 'it') {
+    return `${prefix}_${Date.now().toString(36)}_${Math.floor(Math.random() * 9000 + 1000).toString(36)}`;
+}
+
 const defaultInventory = [
-    { name: 'Yams', inStock: true },
-    { name: 'Peppers', inStock: true },
-    { name: 'Fish Fingerlings', inStock: false },
-    { name: 'Broiler Chicks', inStock: false },
-    { name: 'Snail Rearing (stock)', inStock: false }
+    { id: generateId(), name: 'Yams', quantity: 24, min: 4, inStock: true },
+    { id: generateId(), name: 'Peppers', quantity: 56, min: 8, inStock: true },
+    { id: generateId(), name: 'Fish Fingerlings', quantity: 0, min: 30, inStock: false },
+    { id: generateId(), name: 'Broiler Chicks', quantity: 0, min: 10, inStock: false },
+    { id: generateId(), name: 'Snail Rearing (stock)', quantity: 0, min: 6, inStock: false }
 ];
 
 function loadInventory() {
@@ -172,7 +178,17 @@ function loadInventory() {
         if (!raw) return defaultInventory.slice();
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return defaultInventory.slice();
-        return parsed;
+
+        // Migrate older items that may lack id/quantity fields
+        const migrated = parsed.map(item => {
+            const copy = Object.assign({}, item);
+            if (!copy.id) copy.id = generateId();
+            if (typeof copy.quantity !== 'number') copy.quantity = copy.inStock ? 1 : 0;
+            if (typeof copy.inStock !== 'boolean') copy.inStock = Boolean(copy.quantity && copy.quantity > 0);
+            if (typeof copy.min !== 'number') copy.min = 0;
+            return copy;
+        });
+        return migrated;
     } catch (e) {
         console.warn('Failed to load inventory, using defaults', e);
         return defaultInventory.slice();
@@ -187,25 +203,31 @@ function saveInventory(items) {
     }
 }
 
+function findIndexById(items, id) {
+    return items.findIndex(i => i.id === id);
+}
+
 function renderInventory() {
     const list = document.getElementById('stockList');
     if (!list) return;
     const allItems = loadInventory();
-    // Only show items that are currently in stock (admin controls full inventory)
-    const inStockItems = allItems
-        .map((it, idx) => ({ ...it, _idx: idx }))
-        .filter(it => Boolean(it.inStock));
+
+    // Sort: in-stock first, then by name
+    allItems.sort((a, b) => {
+        if (a.inStock === b.inStock) return a.name.localeCompare(b.name);
+        return a.inStock ? -1 : 1;
+    });
 
     list.innerHTML = '';
-    if (inStockItems.length === 0) {
+    if (allItems.length === 0) {
         const msg = document.createElement('li');
         msg.className = 'stock-item';
-        msg.innerHTML = '<div class="meta"><h4>No items currently in stock</h4><div class="muted">Check back or update via the admin panel.</div></div>';
+        msg.innerHTML = '<div class="meta"><h4>No inventory items</h4></div>';
         list.appendChild(msg);
         return;
     }
 
-    inStockItems.forEach((it) => {
+    allItems.forEach((it) => {
         const li = document.createElement('li');
         li.className = 'stock-item';
 
@@ -215,35 +237,70 @@ function renderInventory() {
         h.textContent = it.name;
         meta.appendChild(h);
 
+        // quantity display
+        const qty = document.createElement('div');
+        qty.className = 'muted';
+        qty.textContent = `Qty: ${it.quantity}`;
+        meta.appendChild(qty);
+
         const badge = document.createElement('span');
-        badge.className = 'badge in';
-        badge.textContent = 'In Stock';
+        badge.className = `badge ${it.inStock ? 'in' : 'out'}`;
+        badge.textContent = it.inStock ? 'In Stock' : 'Out';
         meta.appendChild(badge);
 
         const controls = document.createElement('div');
         controls.className = 'controls';
 
+        // toggle in/out
         const toggle = document.createElement('button');
         toggle.className = 'toggle-btn';
-        toggle.setAttribute('aria-pressed', 'true');
-        toggle.textContent = 'Mark Out';
-        // Use the original inventory index (_idx) so we modify the correct item
+        toggle.setAttribute('aria-pressed', it.inStock ? 'true' : 'false');
+        toggle.textContent = it.inStock ? 'Mark Out' : 'Mark In';
         toggle.addEventListener('click', () => {
             const itemsNow = loadInventory();
-            itemsNow[it._idx].inStock = !itemsNow[it._idx].inStock;
+            const idx = findIndexById(itemsNow, it.id);
+            if (idx === -1) return;
+            itemsNow[idx].inStock = !itemsNow[idx].inStock;
+            // Ensure quantity matches inStock state
+            if (!itemsNow[idx].inStock) itemsNow[idx].quantity = 0;
+            else if (itemsNow[idx].quantity <= 0) itemsNow[idx].quantity = 1;
+            saveInventory(itemsNow);
+            renderInventory();
+        });
+        toggle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle.click(); } });
+
+        // quantity controls
+        const dec = document.createElement('button');
+        dec.className = 'toggle-btn';
+        dec.setAttribute('aria-label', `Decrease ${it.name} quantity`);
+        dec.textContent = '-';
+        dec.addEventListener('click', () => {
+            const itemsNow = loadInventory();
+            const idx = findIndexById(itemsNow, it.id);
+            if (idx === -1) return;
+            itemsNow[idx].quantity = Math.max(0, (itemsNow[idx].quantity || 0) - 1);
+            if (itemsNow[idx].quantity === 0) itemsNow[idx].inStock = false;
             saveInventory(itemsNow);
             renderInventory();
         });
 
-        // keyboard accessible toggle
-        toggle.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggle.click();
-            }
+        const inc = document.createElement('button');
+        inc.className = 'toggle-btn';
+        inc.setAttribute('aria-label', `Increase ${it.name} quantity`);
+        inc.textContent = '+';
+        inc.addEventListener('click', () => {
+            const itemsNow = loadInventory();
+            const idx = findIndexById(itemsNow, it.id);
+            if (idx === -1) return;
+            itemsNow[idx].quantity = (itemsNow[idx].quantity || 0) + 1;
+            if (itemsNow[idx].quantity > 0) itemsNow[idx].inStock = true;
+            saveInventory(itemsNow);
+            renderInventory();
         });
 
+        controls.appendChild(dec);
         controls.appendChild(toggle);
+        controls.appendChild(inc);
 
         li.appendChild(meta);
         li.appendChild(controls);
@@ -251,19 +308,22 @@ function renderInventory() {
     });
 }
 
-// Add item form handling
+// Add item form handling (supports optional quantity field)
 const stockForm = document.getElementById('stockForm');
 if (stockForm) {
     stockForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const input = document.getElementById('stockName');
+        const qtyInput = document.getElementById('stockQty');
         if (!input) return;
         const name = input.value && input.value.trim();
         if (!name) return;
+        const qty = qtyInput ? Math.max(0, parseInt(qtyInput.value || '0', 10)) : 0;
         const items = loadInventory();
-        items.push({ name, inStock: true });
+        items.push({ id: generateId(), name, quantity: qty, min: 0, inStock: qty > 0 });
         saveInventory(items);
-        input.value = '';
+        if (input) input.value = '';
+        if (qtyInput) qtyInput.value = '';
         renderInventory();
         input.focus();
     });
