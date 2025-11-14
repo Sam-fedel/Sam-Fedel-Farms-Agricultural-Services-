@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Sam Fedel Farms</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding: 28px; background: #050805; color: #eaf8ea; }
+    .admin-wrap { max-width: 980px; margin: 0 auto; }
+    h1 { margin-bottom: 8px; color: #bff1b0; }
+    .tool-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+    .panel { background: rgba(0,0,0,0.35); padding:12px; border-radius:10px; margin-bottom:14px; }
+    .inv-list { list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+    .inv-item { display:flex; gap:8px; align-items:center; justify-content:space-between; padding:10px; border-radius:8px; background: linear-gradient(180deg, rgba(0,40,0,0.08), rgba(0,40,0,0.02)); }
+    .inv-left { display:flex; gap:12px; align-items:center; }
+    .inv-actions { display:flex; gap:8px; }
+    .small { font-size:0.9rem; color:#dff6d8; }
+    .muted { color:#99bfa1; }
+    .file-input { display:none; }
+    a.back { color:#fff; text-decoration:none; background:#1f7a2c; padding:8px 12px; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <a class="back" href="index.html">← Back to site</a>
+    <h1>Admin Panel — Sam Fedel Farms</h1>
+    <p class="small muted">This admin page runs in your browser and stores settings locally (no server required). Inventory is saved under <code>sf_inventory_v1</code> in localStorage.</p>
+
+    <div class="panel">
+      <h2>Inventory Management</h2>
+      <div class="tool-bar">
+        <input id="newItem" type="text" placeholder="New item name" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#071207;color:#fff; min-width:220px;">
+        <button id="addBtn" class="btn">Add</button>
+        <button id="exportBtn" class="btn">Export JSON</button>
+        <label class="btn" for="importFile" style="cursor:pointer">Import JSON</label>
+        <input id="importFile" type="file" accept="application/json" class="file-input">
+        <button id="clearBtn" class="btn">Reset Defaults</button>
+      </div>
+      <ul id="invList" class="inv-list" aria-live="polite"></ul>
+    </div>
+
+    <div class="panel">
+      <h2>Gallery — Featured Images</h2>
+      <p class="small muted">Mark an image as featured; this is stored locally (key: <code>sf_gallery_meta</code>).</p>
+      <div id="galleryGrid" class="gallery-grid" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="panel small muted">
+      <p>Notes: The admin page stores data in your browser. To move data between devices, use Export/Import JSON. If you want server-backed admin functionality, I can help implement it.</p>
+    </div>
+  </div>
+
+<script>
+// Admin scripts — inventory CRUD and gallery metadata
+const INVENTORY_KEY = 'sf_inventory_v1';
+const GALLERY_META_KEY = 'sf_gallery_meta';
+const defaultInventory = [
+  { name: 'Yams', inStock: true },
+  { name: 'Peppers', inStock: true },
+  { name: 'Fish Fingerlings', inStock: false },
+  { name: 'Broiler Chicks', inStock: false },
+  { name: 'Snail Rearing (stock)', inStock: false }
+];
+
+function loadInventory(){
+  try{ const raw = localStorage.getItem(INVENTORY_KEY); if(!raw) return defaultInventory.slice(); const p = JSON.parse(raw); return Array.isArray(p)?p:defaultInventory.slice(); }catch(e){console.warn(e); return defaultInventory.slice(); }
+}
+function saveInventory(items){ try{ localStorage.setItem(INVENTORY_KEY, JSON.stringify(items)); }catch(e){ console.warn('save failed',e); } }
+
+function renderInventory(){
+  const list = document.getElementById('invList'); if(!list) return; list.innerHTML='';
+  const items = loadInventory();
+  items.forEach((it, idx)=>{
+    const li = document.createElement('li'); li.className='inv-item';
+    const left = document.createElement('div'); left.className='inv-left';
+    const title = document.createElement('div'); title.innerHTML = '<strong>'+escapeHtml(it.name)+'</strong><div class="muted">'+(it.inStock?'<span style="color:#9eff78">In Stock</span>':'<span style="color:#ddd">Out</span>')+'</div>';
+    left.appendChild(title);
+
+    const actions = document.createElement('div'); actions.className='inv-actions';
+    const toggle = document.createElement('button'); toggle.className='btn'; toggle.textContent = it.inStock? 'Mark Out':'Mark In';
+    toggle.addEventListener('click', ()=>{ const a = loadInventory(); a[idx].inStock = !a[idx].inStock; saveInventory(a); renderInventory(); });
+
+    const edit = document.createElement('button'); edit.className='btn'; edit.textContent='Edit'; edit.addEventListener('click', ()=>{ const newName = prompt('Edit item name', it.name); if(newName){ const a = loadInventory(); a[idx].name = newName.trim(); saveInventory(a); renderInventory(); }});
+
+    const del = document.createElement('button'); del.className='btn'; del.textContent='Delete'; del.addEventListener('click', ()=>{ if(!confirm('Delete this item?')) return; const a=loadInventory(); a.splice(idx,1); saveInventory(a); renderInventory(); });
+
+    actions.appendChild(toggle); actions.appendChild(edit); actions.appendChild(del);
+    li.appendChild(left); li.appendChild(actions);
+    list.appendChild(li);
+  });
+}
+
+// small helper
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Add item
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('newItem'); const name = (input.value||'').trim(); if(!name) return input.focus(); const items = loadInventory(); items.push({ name, inStock:true }); saveInventory(items); input.value=''; renderInventory(); input.focus();
+});
+
+// Export
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const items = loadInventory(); const blob = new Blob([JSON.stringify(items, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'sf_inventory_export.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+// Import
+const importFile = document.getElementById('importFile'); importFile.addEventListener('change', (e)=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return; const reader = new FileReader(); reader.onload = function(){ try{ const parsed = JSON.parse(reader.result); if(!Array.isArray(parsed)){ alert('Invalid format: expected an array of items'); return; } saveInventory(parsed); renderInventory(); alert('Import complete'); }catch(err){ alert('Failed to import: '+err.message); } }; reader.readAsText(f);
+});
+
+// Reset to defaults
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  if(!confirm('Reset inventory to defaults? This cannot be undone.')) return; saveInventory(defaultInventory.slice()); renderInventory(); alert('Reset to defaults');
+});
+
+// --- Gallery metadata (featured) ---
+const galleryFiles = [
+  'samfedel farms/IMG_20251114_172531_679.jpg',
+  'samfedel farms/IMG_20251114_172536_933.jpg',
+  'samfedel farms/IMG_20251114_172541_594.jpg',
+  'samfedel farms/IMG_20251114_172647_624.jpg',
+  'samfedel farms/IMG_20251114_172657_494.jpg',
+  'samfedel farms/IMG_20251114_172707_937.jpg',
+  'samfedel farms/IMG_20251114_172824_421.jpg',
+  'samfedel farms/IMG_20251114_172826_811.jpg',
+  'samfedel farms/IMG_20251114_172828_397.jpg',
+  'samfedel farms/IMG_20251114_172830_876.jpg',
+  'samfedel farms/IMG_20251114_172832_229.jpg',
+  'samfedel farms/IMG_20251114_172833_366.jpg',
+  'samfedel farms/IMG_20251114_173117_712.jpg',
+  'samfedel farms/IMG_20251114_173117_766.jpg',
+  'samfedel farms/IMG_20251114_173123_380.jpg',
+  'samfedel farms/IMG_20251114_173127_579.jpg'
+];
+
+function loadGalleryMeta(){ try{ const raw = localStorage.getItem(GALLERY_META_KEY); return raw?JSON.parse(raw):{}; }catch(e){ return {}; } }
+function saveGalleryMeta(m){ try{ localStorage.setItem(GALLERY_META_KEY, JSON.stringify(m)); }catch(e){ console.warn(e); } }
+
+function renderGallery(){
+  const grid = document.getElementById('galleryGrid'); if(!grid) return; grid.innerHTML=''; const meta = loadGalleryMeta();
+  galleryFiles.forEach((f, i)=>{
+    const wrap = document.createElement('div'); wrap.style.padding='6px'; wrap.style.display='inline-block'; wrap.style.width='180px'; wrap.style.verticalAlign='top';
+    const img = document.createElement('img'); img.src = encodeURI(f); img.alt = 'gallery '+(i+1); img.style.width='100%'; img.style.borderRadius='10px'; img.style.border='2px solid rgba(255,255,255,0.04)'; img.loading='lazy';
+    const controls = document.createElement('div'); controls.style.marginTop='6px'; controls.style.display='flex'; controls.style.justifyContent='space-between';
+    const label = document.createElement('label'); label.style.fontSize='0.9rem'; label.style.color='#dff6d8';
+    const checkbox = document.createElement('input'); checkbox.type='checkbox'; checkbox.checked = !!meta[f]; checkbox.addEventListener('change', ()=>{ const m = loadGalleryMeta(); if(checkbox.checked) m[f]=true; else delete m[f]; saveGalleryMeta(m); renderGallery(); });
+    label.appendChild(checkbox); label.append(' Featured');
+    controls.appendChild(label);
+
+    wrap.appendChild(img); wrap.appendChild(controls); grid.appendChild(wrap);
+  });
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', ()=>{ renderInventory(); renderGallery(); });
+
+</script>
+</body>
+</html>
