@@ -39,6 +39,26 @@
         <input id="importFile" type="file" accept="application/json" class="file-input">
         <button id="clearBtn" class="btn">Reset Defaults</button>
       </div>
+      <div style="margin-top:10px;" class="muted small">Publish inventory to GitHub (optional):</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <input id="ghOwner" type="text" placeholder="owner (github)" value="sam-fedel" style="padding:8px;border-radius:8px;min-width:140px;">
+        <input id="ghRepo" type="text" placeholder="repo name" value="Sam-Fedel-Farms-Agriculture-Services-" style="padding:8px;border-radius:8px;min-width:260px;">
+        <input id="ghPath" type="text" placeholder="file path (inventory.json)" value="inventory.json" style="padding:8px;border-radius:8px;min-width:160px;">
+        <input id="ghToken" type="password" placeholder="GitHub token (kept local)" style="padding:8px;border-radius:8px;min-width:240px;">
+        <button id="publishBtn" class="btn">Publish to GitHub</button>
+      </div>
+      <div class="muted small" style="margin-top:6px;">Note: Publishing uses the GitHub API and requires a Personal Access Token with repo access. For security, do not store long-lived tokens in this page; revoke after use.</div>
+        <div style="margin-top:12px;" class="panel">
+          <h3>Safer publish (no token required)</h3>
+          <p class="small muted">If you prefer not to paste a Personal Access Token in the browser, you can publish by uploading a file named <code>inventory-source.json</code> to a branch called <code>inventory-updates</code> in this repository. A GitHub Actions workflow will automatically copy that file to <code>inventory.json</code> on the <code>main</code> branch and make it live on the site.</p>
+          <ol>
+            <li>Go to your repository on GitHub: <code>https://github.com/sam-fedel/Sam-Fedel-Farms-Agriculture-Services-</code></li>
+            <li>Click <strong>Add file → Upload files</strong>, choose your <code>inventory-source.json</code>, and set the branch to <code>inventory-updates</code> (create it if necessary).</li>
+            <li>Commit the file; the GitHub Actions workflow will run and update <code>inventory.json</code> on <code>main</code>.</li>
+            <li>Visitors will receive the published inventory automatically (the site polls every 30s).</li>
+          </ol>
+          <p class="small muted">This approach uses the repository's built-in GitHub Actions (the workflow is already added to this repo) and avoids sharing tokens in the browser.</p>
+        </div>
       <ul id="invList" class="inv-list" aria-live="polite"></ul>
     </div>
 
@@ -164,6 +184,58 @@ function renderGallery(){
 
 // Init
 document.addEventListener('DOMContentLoaded', ()=>{ renderInventory(); renderGallery(); });
+
+// --- GitHub publish helpers ---
+async function publishInventoryToGitHub(token, owner, repo, path) {
+  if (!token) throw new Error('Missing token');
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+  const items = loadInventory();
+  const contentStr = JSON.stringify(items, null, 2);
+  // encode to base64
+  const contentB64 = btoa(unescape(encodeURIComponent(contentStr)));
+  const headers = { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' };
+
+  // attempt to get existing file to retrieve sha
+  let sha = null;
+  try {
+    const getRes = await fetch(url, { headers });
+    if (getRes.ok) {
+      const j = await getRes.json();
+      sha = j.sha;
+    }
+  } catch (e) {
+    // ignore - file might not exist
+  }
+
+  const body = { message: 'Update inventory.json via admin', content: contentB64, committer: { name: 'Site Admin', email: 'noreply@samfedel.local' } };
+  if (sha) body.sha = sha;
+
+  const putRes = await fetch(url, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!putRes.ok) {
+    const txt = await putRes.text();
+    throw new Error('GitHub API error: ' + txt);
+  }
+  return await putRes.json();
+}
+
+document.getElementById('publishBtn').addEventListener('click', async () => {
+  const token = document.getElementById('ghToken').value.trim();
+  const owner = document.getElementById('ghOwner').value.trim();
+  const repo = document.getElementById('ghRepo').value.trim();
+  const path = document.getElementById('ghPath').value.trim() || 'inventory.json';
+  if (!token || !owner || !repo) { alert('Please provide owner, repo and token to publish.'); return; }
+  try {
+    document.getElementById('publishBtn').textContent = 'Publishing...';
+    const res = await publishInventoryToGitHub(token, owner, repo, path);
+    alert('Published to GitHub: ' + (res.content && res.content.path));
+    // clear token field after use
+    document.getElementById('ghToken').value = '';
+  } catch (err) {
+    alert('Publish failed: ' + err.message);
+  } finally {
+    document.getElementById('publishBtn').textContent = 'Publish to GitHub';
+  }
+});
 
 </script>
 </body>

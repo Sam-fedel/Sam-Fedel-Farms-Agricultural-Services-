@@ -391,3 +391,54 @@ function initCarousel() {
 document.addEventListener('DOMContentLoaded', () => {
     initCarousel();
 });
+
+/* Remote inventory polling (optional): fetch inventory.json from GitHub Pages and apply so everyone sees published changes.
+   This will try the provided GitHub Pages URL and, if successful, overwrite the local inventory used for display.
+*/
+const REMOTE_INVENTORY_URL = 'https://sam-fedel.github.io/Sam-Fedel-Farms-Agriculture-Services-/inventory.json';
+async function fetchAndApplyRemoteInventory() {
+    try {
+        const res = await fetch(REMOTE_INVENTORY_URL, { cache: 'no-store' });
+        if (!res.ok) return false;
+        const json = await res.json();
+        if (!Array.isArray(json)) return false;
+        // Save remote inventory locally and render
+        try { localStorage.setItem(INVENTORY_KEY, JSON.stringify(json)); } catch (e) { console.warn('failed to save remote inventory', e); }
+        renderInventory();
+        showToast('Inventory updated from remote');
+        return true;
+    } catch (err) {
+        // network failure, ignore
+        return false;
+    }
+}
+
+// Poll remote inventory on load and every 30s
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAndApplyRemoteInventory();
+    setInterval(fetchAndApplyRemoteInventory, 30000);
+});
+
+// Small toast helper for notifications
+function showToast(msg, timeout = 3000) {
+    try {
+        let t = document.getElementById('sf-toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'sf-toast';
+            t.style.position = 'fixed';
+            t.style.right = '16px';
+            t.style.bottom = '20px';
+            t.style.background = 'rgba(0,0,0,0.7)';
+            t.style.color = '#fff';
+            t.style.padding = '10px 14px';
+            t.style.borderRadius = '8px';
+            t.style.zIndex = '9999';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = '1';
+        if (t._timeout) clearTimeout(t._timeout);
+        t._timeout = setTimeout(() => { t.style.opacity = '0'; }, timeout);
+    } catch (e) { /* ignore */ }
+}

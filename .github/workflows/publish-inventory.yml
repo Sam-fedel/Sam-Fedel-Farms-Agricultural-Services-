@@ -1,0 +1,45 @@
+name: Create Pull Request to publish inventory
+
+on:
+  push:
+    branches:
+      - inventory-updates
+    paths:
+      - 'inventory-source.json'
+
+permissions:
+  contents: write
+
+jobs:
+  create-pr:
+    name: Create PR to main with inventory.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pushed branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Ensure inventory-source.json exists
+        run: |
+          if [ ! -f inventory-source.json ]; then
+            echo "inventory-source.json not found"; exit 1;
+          fi
+
+      - name: Copy inventory-source.json to inventory.json (prepare PR changes)
+        run: |
+          cp inventory-source.json inventory.json
+
+      - name: Create pull request to main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Publish inventory.json (automated PR)"
+          branch: "inventory-pr-${{ github.sha }}"
+          title: "Publish inventory.json from inventory-updates"
+          body: |
+            This PR updates `inventory.json` from `inventory-source.json` pushed to `inventory-updates` branch.
+            Review and merge to publish inventory to the live site.
+          base: main
+          labels: automated,inventory
